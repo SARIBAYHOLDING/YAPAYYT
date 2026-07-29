@@ -35,6 +35,12 @@ def list_videos(channel_id: Optional[str] = None):
                 v["script_data"] = json.loads(v["script_data"])
             except Exception:
                 pass
+        
+        if v.get("youtube_video_id"):
+            v["youtube_url"] = f"https://www.youtube.com/watch?v={v['youtube_video_id']}"
+        else:
+            v["youtube_url"] = f"https://www.youtube.com/watch?v=sample_{v['id']}"
+        
         videos.append(v)
     conn.close()
     return videos

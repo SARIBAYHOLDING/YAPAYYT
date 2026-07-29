@@ -209,13 +209,15 @@ export default function StudioHubView({ channels, videos, onGenerateVideo }) {
                       {v.status === 'published' ? 'YAYINLANDI' : 'YAYINA HAZIR'}
                     </span>
 
-                    <button 
-                      onClick={() => handleManualUpload(v)}
+                    <a 
+                      href={v.youtube_url || `https://www.youtube.com/watch?v=${v.id}`}
+                      target="_blank"
+                      rel="noreferrer"
                       className="btn-primary"
-                      style={{ fontSize: '12px', padding: '6px 14px', background: '#EF4444' }}
+                      style={{ fontSize: '12px', padding: '6px 14px', background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)' }}
                     >
-                      <UploadCloud size={14} /> YouTube'a Yükle
-                    </button>
+                      <ExternalLink size={14} /> YouTube'da İzle 📺
+                    </a>
                   </div>
                 </div>
               ))}

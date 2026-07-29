@@ -1,17 +1,28 @@
 import React, { useState } from 'react';
-import { Play, Download, Trash2, Film, CheckCircle2, FileText, Image as ImageIcon, Volume2 } from 'lucide-react';
+import { Play, Download, Trash2, Film, CheckCircle2, FileText, Image as ImageIcon, Volume2, ExternalLink, Copy, Tv } from 'lucide-react';
 
 export default function StudioView({ videos, onDeleteVideo }) {
   const [selectedVideo, setSelectedVideo] = useState(videos[0] || null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const activeYoutubeUrl = selectedVideo?.youtube_url || (selectedVideo ? `https://www.youtube.com/watch?v=${selectedVideo.id}` : '');
+
+  const handleCopyLink = () => {
+    if (activeYoutubeUrl) {
+      navigator.clipboard.writeText(activeYoutubeUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
 
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <h1 style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'Outfit', color: '#FFF' }}>
-          Video & Önizleme Stüdyosu
+          Video & Önizleme Stüdyosu 🎬
         </h1>
         <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>
-          Üretilen tüm videolarınızı sahne sahne inceleyin, 1080p önizlemesini izleyin ve yayın durumunu kontrol edin.
+          Üretilen tüm videolarınızı sahne sahne inceleyin, 1080p önizlemesini izleyin ve doğrudan YouTube bağlantısını görüntüleyin.
         </p>
       </div>
 
@@ -78,6 +89,50 @@ export default function StudioView({ videos, onDeleteVideo }) {
                 >
                   <Trash2 size={18} />
                 </button>
+              </div>
+
+              {/* Prominent YouTube Video Link Container */}
+              <div style={{
+                padding: '16px 20px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                  <Tv size={24} color="#EF4444" />
+                  <div style={{ overflow: 'hidden' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      YouTube Video Bağlantısı
+                    </span>
+                    <div style={{ fontSize: '13px', color: '#FFF', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {activeYoutubeUrl}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={handleCopyLink}
+                    className="btn-secondary"
+                    style={{ fontSize: '12px', padding: '8px 14px', whiteSpace: 'nowrap' }}
+                  >
+                    <Copy size={14} /> {copiedLink ? 'Kopyalandı!' : 'Kopyala'}
+                  </button>
+
+                  <a 
+                    href={activeYoutubeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary"
+                    style={{ fontSize: '12px', padding: '8px 16px', background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)', whiteSpace: 'nowrap' }}
+                  >
+                    <ExternalLink size={14} /> YouTube'da İzle 📺
+                  </a>
+                </div>
               </div>
 
               {/* Video Player */}
