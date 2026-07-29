@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.db import init_db
 from app.config import STORAGE_DIR
-from app.routers import channels, videos, trends, settings
+from app.routers import channels, videos, trends, settings, upload
 from app.services.scheduler_service import SchedulerService
 
 app = FastAPI(
@@ -30,6 +30,7 @@ app.include_router(channels.router)
 app.include_router(videos.router)
 app.include_router(trends.router)
 app.include_router(settings.router)
+app.include_router(upload.router)
 
 @app.on_event("startup")
 def startup_event():

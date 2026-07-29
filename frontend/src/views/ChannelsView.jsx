@@ -26,6 +26,20 @@ export default function ChannelsView({ channels, onAddChannel, onToggleAutopilot
     setShowModal(false);
   };
 
+  const handleConnectOAuth = async (channelId) => {
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/upload/auth-url/${channelId}`);
+      const data = await res.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      } else {
+        alert(data.message || 'Google Cloud client_secrets.json bulunamadı. Lütfen storage/client_secrets.json dosyasını ekleyin.');
+      }
+    } catch (e) {
+      alert('OAuth bağlantı hatası: ' + e.message);
+    }
+  };
+
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -103,7 +117,11 @@ export default function ChannelsView({ channels, onAddChannel, onToggleAutopilot
             </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-              <button className="btn-secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '13px' }}>
+              <button 
+                className="btn-secondary" 
+                style={{ flex: 1, justifyContent: 'center', fontSize: '13px' }}
+                onClick={() => handleConnectOAuth(c.id)}
+              >
                 <ExternalLink size={14} /> YouTube OAuth Bağla
               </button>
             </div>

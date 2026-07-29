@@ -8,24 +8,6 @@ class YouTubeUploader:
     def __init__(self):
         pass
 
-    def get_auth_url(self, channel_id: str) -> str:
-        """Returns OAuth authorization URL if client_secrets.json is provided."""
-        if not CLIENT_SECRETS_FILE.exists():
-            return "NO_CLIENT_SECRETS"
-        
-        try:
-            from google_auth_oauthlib.flow import Flow
-            flow = Flow.from_client_secrets_file(
-                str(CLIENT_SECRETS_FILE),
-                scopes=["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube.readonly"],
-                redirect_uri="http://localhost:8000/api/upload/oauth2callback"
-            )
-            auth_url, _ = flow.authorization_url(prompt="consent", state=channel_id)
-            return auth_url
-        except Exception as e:
-            print(f"Error creating auth URL: {e}")
-            return "AUTH_ERROR"
-
     def upload_video(self, 
                      channel_id: str, 
                      video_path: Path, 
@@ -33,21 +15,35 @@ class YouTubeUploader:
                      description: str, 
                      tags: list, 
                      thumbnail_path: Path = None,
-                     category_id: str = "27", # 27 = Education, 1 = Film & Animation, 28 = SciTech
+                     category_id: str = "27", # 27 = Education, 1 = Film & Animation
                      is_kids: bool = True,
                      privacy_status: str = "public") -> Dict[str, Any]:
         """
-        Uploads video to YouTube via Data API v3 if OAuth token exists, or stores in publication queue.
+        Uploads video to YouTube via Data API v3 using permanent refresh token credentials.
+        Auto-refreshes expired access tokens seamlessly.
         """
         token_file = OAUTH_TOKENS_DIR / f"{channel_id}_token.json"
         
         if token_file.exists():
             try:
                 from google.oauth2.credentials import Credentials
+                from google.auth.transport.requests import Request
                 from googleapiclient.discovery import build
                 from googleapiclient.http import MediaFileUpload
 
-                creds = Credentials.from_authorized_user_file(str(token_file))
+                with open(token_file, "r", encoding="utf-8") as f:
+                    token_info = json.load(f)
+
+                creds = Credentials.from_authorized_user_info(token_info)
+
+                # Auto-refresh expired access tokens in background
+                if creds.expired and creds.refresh_token:
+                    print(f"Refreshing YouTube OAuth token for channel {channel_id}...")
+                    creds.refresh(Request())
+                    # Save refreshed token
+                    with open(token_file, "w", encoding="utf-8") as f:
+                        f.write(creds.to_json())
+
                 youtube = build("youtube", "v3", credentials=creds)
 
                 body = {
@@ -94,13 +90,12 @@ class YouTubeUploader:
                     "error": str(e)
                 }
         else:
-            # Safe Queue Mode when OAuth is not yet completed
             return {
                 "status": "queued_local",
-                "message": "Video successfully generated and queued locally. Connect YouTube OAuth to publish automatically.",
+                "message": "Video rendered and saved locally. Connect YouTube OAuth in Channel Manager to auto-post.",
                 "video_path": str(video_path)
             }
 
 if __name__ == "__main__":
     uploader = YouTubeUploader()
-    print("YouTubeUploader module ready.")
+    print("YouTubeUploader module ready with permanent refresh token auto-renewal.")
