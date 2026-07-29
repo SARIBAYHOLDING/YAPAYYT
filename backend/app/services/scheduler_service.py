@@ -137,7 +137,7 @@ class SchedulerService:
         rendered_mp4 = VIDEOS_DIR / f"{video_id}.mp4"
         self.renderer.render_video(
             scenes_with_images,
-            audio_file,
+            mixed_audio_file,
             rendered_mp4,
             is_shorts=is_shorts,
             title=script_data["title"]
