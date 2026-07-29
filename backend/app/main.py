@@ -41,6 +41,12 @@ def startup_event():
     except Exception as e:
         print(f"Scheduler startup info: {e}")
 
+from fastapi.responses import RedirectResponse
+
+@app.get("/")
+def root_redirect():
+    return RedirectResponse(url="http://localhost:5173/")
+
 @app.get("/api/health")
 def health_check():
     return {
