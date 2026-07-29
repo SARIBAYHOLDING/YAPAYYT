@@ -9,6 +9,7 @@ from app.config import AUDIO_DIR, IMAGES_DIR, VIDEOS_DIR, THUMBNAILS_DIR
 from app.services.script_generator import ScriptGenerator
 from app.services.tts_engine import generate_tts_sync
 from app.services.image_generator import ImageGenerator
+from app.services.stock_video_fetcher import StockVideoFetcher
 from app.services.thumbnail_builder import ThumbnailBuilder
 from app.services.video_renderer import VideoRenderer
 from app.services.youtube_uploader import YouTubeUploader
@@ -18,6 +19,7 @@ class SchedulerService:
         self.scheduler = BackgroundScheduler()
         self.script_gen = ScriptGenerator()
         self.image_gen = ImageGenerator()
+        self.stock_fetcher = StockVideoFetcher()
         self.thumbnail_builder = ThumbnailBuilder()
         self.renderer = VideoRenderer()
         self.uploader = YouTubeUploader()

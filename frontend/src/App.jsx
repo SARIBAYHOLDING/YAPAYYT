@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ChannelsView from './views/ChannelsView';
+import StudioHubView from './views/StudioHubView';
 import GeneratorView from './views/GeneratorView';
 import TrendsView from './views/TrendsView';
 import StudioView from './views/StudioView';
@@ -105,6 +106,14 @@ export default function App() {
             channels={channels} 
             onAddChannel={handleAddChannel} 
             onToggleAutopilot={handleToggleAutopilot} 
+          />
+        )}
+
+        {activeTab === 'studio_hub' && (
+          <StudioHubView 
+            channels={channels}
+            videos={videos}
+            onGenerateVideo={handleGenerateVideo}
           />
         )}
 

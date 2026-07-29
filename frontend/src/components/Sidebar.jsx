@@ -7,7 +7,8 @@ import {
   Film, 
   Settings, 
   Bot,
-  Zap
+  Zap,
+  Play
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab }) {
@@ -15,6 +16,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
     { id: 'dashboard', label: 'Genel Bakış', icon: LayoutDashboard },
     { id: 'generator', label: 'Hızlı Video Üretici', icon: Sparkles, highlight: true },
     { id: 'channels', label: 'Kanal Yönetimi', icon: Tv },
+    { id: 'studio_hub', label: 'YouTube Studio Hub', icon: Play, highlight: false },
     { id: 'trends', label: 'Trend & Esinlenme', icon: TrendingUp },
     { id: 'studio', label: 'Video & Önizleme Stüdyosu', icon: Film },
     { id: 'settings', label: 'Sistem Ayarları', icon: Settings },
