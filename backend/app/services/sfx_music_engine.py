@@ -92,8 +92,10 @@ class SFXMusicEngine:
             subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
             return str(output_mixed_mp3)
         except Exception as e:
-            print(f"Audio mix fallback: {e}")
-            return str(narration_mp3)
+            print(f"Audio mix fallback: {e}. Preserving raw TTS narration file.")
+            import shutil
+            shutil.copyfile(narration_mp3, output_mixed_mp3)
+            return str(output_mixed_mp3)
 
 if __name__ == "__main__":
     sfx = SFXMusicEngine()

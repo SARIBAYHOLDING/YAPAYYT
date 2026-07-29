@@ -94,9 +94,13 @@ class VideoRenderer:
                 "-safe", "0",
                 "-i", str(concat_file),
                 "-i", str(audio_path),
+                "-map", "0:v",
+                "-map", "1:a",
+                "-r", "25",
                 "-c:v", "libx264",
                 "-preset", "ultrafast",
                 "-c:a", "aac",
+                "-b:a", "192k",
                 "-pix_fmt", "yuv420p",
                 "-shortest",
                 str(output_video_path)
