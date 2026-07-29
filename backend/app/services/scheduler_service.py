@@ -3,6 +3,7 @@ import json
 import uuid
 import random
 from pathlib import Path
+from typing import Dict, Any
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.db import get_db
 from app.config import AUDIO_DIR, IMAGES_DIR, VIDEOS_DIR, THUMBNAILS_DIR
@@ -14,6 +15,9 @@ from app.services.sfx_music_engine import SFXMusicEngine
 from app.services.thumbnail_builder import ThumbnailBuilder
 from app.services.video_renderer import VideoRenderer
 from app.services.youtube_uploader import YouTubeUploader
+
+# Global Real-Time Job Progress Tracker
+JOB_PROGRESS: Dict[str, Dict[str, Any]] = {}
 
 class SchedulerService:
     def __init__(self):
@@ -48,13 +52,27 @@ class SchedulerService:
             except Exception as e:
                 print(f"Error in auto-pilot for {ch_dict['name']}: {e}")
 
-    def generate_and_publish_for_channel(self, channel_id: str, custom_topic: str = None) -> str:
+    def generate_and_publish_for_channel(self, channel_id: str, custom_topic: str = None, job_id: str = None) -> str:
+        if not job_id:
+            job_id = f"job_{uuid.uuid4().hex[:8]}"
+
+        def update_progress(percent: int, step_desc: str):
+            JOB_PROGRESS[job_id] = {
+                "status": "in_progress",
+                "progress_percent": percent,
+                "current_step": step_desc,
+                "video_id": None
+            }
+
+        update_progress(10, "1/6 - Gemini AI ile Viral Hook & SEO Senaryosu Üretiliyor...")
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM channels WHERE id = ?", (channel_id,))
         ch_row = cursor.fetchone()
         if not ch_row:
             conn.close()
+            JOB_PROGRESS[job_id] = {"status": "failed", "progress_percent": 0, "error": "Kanal bulunamadı"}
             raise ValueError("Channel not found")
         
         ch = dict(ch_row)
@@ -62,7 +80,6 @@ class SchedulerService:
         format_type = ch.get("video_format", "shorts")
         voice = ch.get("voice", "tr-TR-EmelNeural")
 
-        # Pick dynamic topic if not provided
         if not custom_topic:
             topic_pool = {
                 "kids_stories": [
@@ -72,8 +89,7 @@ class SchedulerService:
                 ],
                 "ai_tech_facts": [
                     "İnsan Beynini Geçen Yapay Zeka Devrimi", "2030 Yılında Yaşamımızı Değiştirecek 5 Teknoloji",
-                    "Kuantum Bilgisayarlar Nasıl Çalışır?", "Otonom Robotların Geleceği",
-                    "Uzay Trenleri Ve Mars Kolonisi"
+                    "Kuantum Bilgisayarlar Nasıl Çalışır?", "Otonom Robotların Geleceği"
                 ]
             }
             topics = topic_pool.get(niche, ["Harika Bir Yolculuk Hikayesi"])
@@ -85,7 +101,6 @@ class SchedulerService:
         print(f"[{video_id}] Generating AI script for topic: {custom_topic}")
         script_data = self.script_gen.generate_script(custom_topic, niche=niche, format_type=format_type, language=ch.get("language", "tr"))
 
-        # Save record in DB
         cursor.execute("""
         INSERT INTO videos (id, channel_id, title, description, tags, topic, niche, status, format, script_data)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'generating', ?, ?);
@@ -95,8 +110,8 @@ class SchedulerService:
         ))
         conn.commit()
 
-        # 2. TTS Voiceover & Background Music Mix
-        print(f"[{video_id}] Generating voiceover with voice {voice}...")
+        # 2. TTS Voiceover & Music Mix
+        update_progress(30, "2/6 - Microsoft Edge Neural Speech ile Doğal Seslendirme Oluşturuluyor...")
         raw_audio_file = AUDIO_DIR / f"{video_id}_raw.mp3"
         mixed_audio_file = AUDIO_DIR / f"{video_id}.mp3"
         srt_file = AUDIO_DIR / f"{video_id}.srt"
@@ -104,11 +119,11 @@ class SchedulerService:
         full_text = " ".join([s["narration"] for s in script_data["scenes"]])
         generate_tts_sync(full_text, str(raw_audio_file), voice=voice, output_srt_path=str(srt_file))
 
-        print(f"[{video_id}] Mixing background music track for mood {niche}...")
+        update_progress(45, "3/6 - SFX Ses Efektleri & Arka Plan Müziği Miksleniyor...")
         self.sfx_engine.mix_narration_with_music(raw_audio_file, mixed_audio_file, mood=niche)
 
-        # 3. AI Image Generation per scene
-        print(f"[{video_id}] Generating AI scene visuals...")
+        # 3. Visuals Generation
+        update_progress(60, "4/6 - Pollinations AI & HD Klipler Çekiliyor...")
         is_shorts = (format_type == "shorts")
         w, h = (1080, 1920) if is_shorts else (1920, 1080)
         
@@ -123,7 +138,7 @@ class SchedulerService:
             })
 
         # 4. Thumbnail Builder
-        print(f"[{video_id}] Building high-CTR thumbnail...")
+        update_progress(75, "5/6 - Yüksek CTR YouTube Kapak Görseli Tasarlanıyor...")
         thumb_path = THUMBNAILS_DIR / f"{video_id}_thumb.jpg"
         self.thumbnail_builder.create_thumbnail(
             Path(scenes_with_images[0]["image_path"]),
@@ -132,8 +147,8 @@ class SchedulerService:
             is_shorts=is_shorts
         )
 
-        # 5. Video Rendering
-        print(f"[{video_id}] Rendering final MP4 video...")
+        # 5. FFmpeg Video Render
+        update_progress(88, "6/6 - FFmpeg 1080p Video İşleniyor (Render)...")
         rendered_mp4 = VIDEOS_DIR / f"{video_id}.mp4"
         self.renderer.render_video(
             scenes_with_images,
@@ -143,7 +158,6 @@ class SchedulerService:
             title=script_data["title"]
         )
 
-        # Update DB status with relative static server paths
         rel_audio = f"storage/audio/{mixed_audio_file.name}"
         rel_video = f"storage/videos/{rendered_mp4.name}"
         rel_thumb = f"storage/thumbnails/{thumb_path.name}"
@@ -155,7 +169,7 @@ class SchedulerService:
         """, (rel_audio, rel_video, rel_thumb, video_id))
         conn.commit()
 
-        # 6. Upload / Publish
+        # 6. YouTube Auto-Upload
         print(f"[{video_id}] Attempting YouTube auto-upload...")
         pub_result = self.uploader.upload_video(
             channel_id,
@@ -174,7 +188,14 @@ class SchedulerService:
 
         conn.commit()
         conn.close()
-        print(f"[{video_id}] Video generation & pipeline completed successfully!")
+
+        JOB_PROGRESS[job_id] = {
+            "status": "completed",
+            "progress_percent": 100,
+            "current_step": "🎉 Video ve Kapak Görseli Başarıyla Tamamlandı!",
+            "video_id": video_id
+        }
+
         return video_id
 
 if __name__ == "__main__":

@@ -19,12 +19,15 @@ export default function GeneratorView({ channels, onGenerateVideo }) {
     "Küçük Ejderha Kuki ve Dostluk Ormanı"
   ];
 
+  const [progressPercent, setProgressPercent] = useState(0);
+
   const handleGenerate = async (e) => {
     e.preventDefault();
     if (!selectedChannel) return;
 
     setIsGenerating(true);
-    setCurrentStep('1/6 - Gemini AI ile Viral Hook & SEO Senaryosu Üretiliyor...');
+    setProgressPercent(5);
+    setCurrentStep('Başlatılıyor...');
     setResultMessage('');
 
     try {
@@ -39,26 +42,47 @@ export default function GeneratorView({ channels, onGenerateVideo }) {
           channel_id: selectedChannel,
           topics: topicsList
         });
+        setProgressPercent(100);
         setResultMessage(`🎉 Tebrikler! ${topicsList.length} Adet Video Başarıyla Üretildi!`);
       } else {
         if (!topic) return;
-        setTimeout(() => setCurrentStep('2/6 - Microsoft Edge Neural Speech ile Seslendiriliyor...'), 2000);
-        setTimeout(() => setCurrentStep('3/6 - SFX & Arka Plan Müzikleri Miksleniyor...'), 4000);
-        setTimeout(() => setCurrentStep('4/6 - Pollinations AI & HD Klipler Çekiliyor...'), 6000);
-        setTimeout(() => setCurrentStep('5/6 - FFmpeg Ken Burns & Alt Yazı Render Ediliyor...'), 8000);
-        setTimeout(() => setCurrentStep('6/6 - Yüksek CTR Kapak Resmi Tasarlanıyor...'), 11000);
-
-        await onGenerateVideo({
+        const res = await onGenerateVideo({
           channel_id: selectedChannel,
           topic: topic
         });
 
-        setResultMessage('🎉 Harika! 10x İyileştirilmiş Video, Müzik & Kapak Görseli Üretildi.');
+        const jobId = res.job_id;
+        if (jobId) {
+          // Poll real-time progress from backend
+          const pollInterval = setInterval(async () => {
+            try {
+              const progRes = await axios.get(`http://127.0.0.1:8000/api/videos/progress/${jobId}`);
+              const prog = progRes.data;
+              if (prog) {
+                setProgressPercent(prog.progress_percent || 10);
+                setCurrentStep(prog.current_step || 'Üretim devam ediyor...');
+                if (prog.status === 'completed' || prog.progress_percent >= 100) {
+                  clearInterval(pollInterval);
+                  setIsGenerating(false);
+                  setResultMessage('🎉 Harika! Video, Seslendirme, Müzik & Kapak Görseli Tamamlandı!');
+                } else if (prog.status === 'failed') {
+                  clearInterval(pollInterval);
+                  setIsGenerating(false);
+                  setResultMessage('Hata oluştu: ' + (prog.error || 'Üretim başarısız'));
+                }
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          }, 1500);
+        } else {
+          setIsGenerating(false);
+          setResultMessage('🎉 Video Başarıyla Üretildi.');
+        }
       }
     } catch (err) {
-      setResultMessage('Hata oluştu: ' + (err.message || 'Üretim tamamlanamadı.'));
-    } finally {
       setIsGenerating(false);
+      setResultMessage('Hata oluştu: ' + (err.message || 'Üretim tamamlanamadı.'));
     }
   };
 
@@ -214,23 +238,32 @@ export default function GeneratorView({ channels, onGenerateVideo }) {
             </div>
           </form>
 
-          {/* Realtime Progress Steps */}
+          {/* Realtime Animated Progress Bar */}
           {isGenerating && (
             <div style={{
               marginTop: '24px',
-              padding: '20px',
-              borderRadius: '12px',
+              padding: '24px',
+              borderRadius: '16px',
               background: 'rgba(99, 102, 241, 0.1)',
               border: '1px solid rgba(99, 102, 241, 0.3)',
               display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              color: '#818CF8',
-              fontSize: '14px',
-              fontWeight: 600
+              flexDirection: 'column',
+              gap: '12px'
             }}>
-              <Loader2 size={24} style={{ animation: 'spin 1.5s linear infinite' }} />
-              <div>{currentStep}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: '#FFF' }}>{currentStep}</span>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#818CF8', fontFamily: 'Outfit' }}>%{progressPercent}</span>
+              </div>
+              <div style={{ width: '100%', height: '12px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${progressPercent}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #6366F1 0%, #a855f7 50%, #ec4899 100%)',
+                  borderRadius: '6px',
+                  boxShadow: '0 0 15px rgba(99, 102, 241, 0.8)',
+                  transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }} />
+              </div>
             </div>
           )}
 

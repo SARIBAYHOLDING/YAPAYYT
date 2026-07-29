@@ -56,11 +56,18 @@ def get_video(video_id: str):
             pass
     return v
 
+@router.get("/progress/{job_id}")
+def get_job_progress(job_id: str):
+    from app.services.scheduler_service import JOB_PROGRESS
+    progress = JOB_PROGRESS.get(job_id, {"status": "not_found", "progress_percent": 0, "current_step": "Başlatılıyor..."})
+    return progress
+
 @router.post("/generate")
 def generate_video(req: GenerateVideoRequest, background_tasks: BackgroundTasks):
     try:
-        video_id = scheduler_service.generate_and_publish_for_channel(req.channel_id, req.topic)
-        return {"status": "success", "video_id": video_id, "message": "Video generation and pipeline completed!"}
+        job_id = f"job_{uuid.uuid4().hex[:8]}"
+        background_tasks.add_task(scheduler_service.generate_and_publish_for_channel, req.channel_id, req.topic, job_id)
+        return {"status": "started", "job_id": job_id, "message": "Video üretimi arka planda başlatıldı."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
