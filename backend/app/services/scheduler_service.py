@@ -144,7 +144,7 @@ class SchedulerService:
         )
 
         # Update DB status with relative static server paths
-        rel_audio = f"storage/audio/{audio_file.name}"
+        rel_audio = f"storage/audio/{mixed_audio_file.name}"
         rel_video = f"storage/videos/{rendered_mp4.name}"
         rel_thumb = f"storage/thumbnails/{thumb_path.name}"
 
