@@ -10,6 +10,7 @@ from app.services.script_generator import ScriptGenerator
 from app.services.tts_engine import generate_tts_sync
 from app.services.image_generator import ImageGenerator
 from app.services.stock_video_fetcher import StockVideoFetcher
+from app.services.sfx_music_engine import SFXMusicEngine
 from app.services.thumbnail_builder import ThumbnailBuilder
 from app.services.video_renderer import VideoRenderer
 from app.services.youtube_uploader import YouTubeUploader
@@ -20,6 +21,7 @@ class SchedulerService:
         self.script_gen = ScriptGenerator()
         self.image_gen = ImageGenerator()
         self.stock_fetcher = StockVideoFetcher()
+        self.sfx_engine = SFXMusicEngine()
         self.thumbnail_builder = ThumbnailBuilder()
         self.renderer = VideoRenderer()
         self.uploader = YouTubeUploader()
@@ -93,12 +95,17 @@ class SchedulerService:
         ))
         conn.commit()
 
-        # 2. TTS Voiceover
+        # 2. TTS Voiceover & Background Music Mix
         print(f"[{video_id}] Generating voiceover with voice {voice}...")
-        audio_file = AUDIO_DIR / f"{video_id}.mp3"
+        raw_audio_file = AUDIO_DIR / f"{video_id}_raw.mp3"
+        mixed_audio_file = AUDIO_DIR / f"{video_id}.mp3"
         srt_file = AUDIO_DIR / f"{video_id}.srt"
+        
         full_text = " ".join([s["narration"] for s in script_data["scenes"]])
-        generate_tts_sync(full_text, str(audio_file), voice=voice, output_srt_path=str(srt_file))
+        generate_tts_sync(full_text, str(raw_audio_file), voice=voice, output_srt_path=str(srt_file))
+
+        print(f"[{video_id}] Mixing background music track for mood {niche}...")
+        self.sfx_engine.mix_narration_with_music(raw_audio_file, mixed_audio_file, mood=niche)
 
         # 3. AI Image Generation per scene
         print(f"[{video_id}] Generating AI scene visuals...")

@@ -59,11 +59,27 @@ def get_video(video_id: str):
 @router.post("/generate")
 def generate_video(req: GenerateVideoRequest, background_tasks: BackgroundTasks):
     try:
-        # Trigger background generation task
         video_id = scheduler_service.generate_and_publish_for_channel(req.channel_id, req.topic)
         return {"status": "success", "video_id": video_id, "message": "Video generation and pipeline completed!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class BatchGenerateRequest(BaseModel):
+    channel_id: str
+    topics: List[str]
+    niche: Optional[str] = "kids_stories"
+    format: Optional[str] = "shorts"
+
+@router.post("/batch-generate")
+def batch_generate_videos(req: BatchGenerateRequest, background_tasks: BackgroundTasks):
+    generated_ids = []
+    for topic in req.topics:
+        try:
+            vid_id = scheduler_service.generate_and_publish_for_channel(req.channel_id, topic)
+            generated_ids.append(vid_id)
+        except Exception as e:
+            print(f"Batch generation error for {topic}: {e}")
+    return {"status": "success", "count": len(generated_ids), "video_ids": generated_ids}
 
 @router.delete("/{video_id}")
 def delete_video(video_id: str):
