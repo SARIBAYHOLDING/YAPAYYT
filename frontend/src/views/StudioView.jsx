@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Play, Download, Trash2, Film, CheckCircle2, FileText, Image as ImageIcon, Volume2, ExternalLink, Copy, Tv } from 'lucide-react';
+import { Play, Download, Trash2, Film, CheckCircle2, FileText, Image as ImageIcon, Volume2, ExternalLink, Copy, Tv, UploadCloud } from 'lucide-react';
 
 export default function StudioView({ videos, onDeleteVideo }) {
   const [selectedVideo, setSelectedVideo] = useState(videos[0] || null);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const activeYoutubeUrl = selectedVideo?.youtube_url || (selectedVideo ? `https://www.youtube.com/watch?v=${selectedVideo.id}` : '');
+  const isPublished = selectedVideo?.status === 'published' && selectedVideo?.youtube_video_id;
+  const youtubeUrl = isPublished ? `https://www.youtube.com/watch?v=${selectedVideo.youtube_video_id}` : null;
+  const localVideoUrl = selectedVideo?.video_path ? `http://127.0.0.1:8000/${selectedVideo.video_path}` : null;
 
   const handleCopyLink = () => {
-    if (activeYoutubeUrl) {
-      navigator.clipboard.writeText(activeYoutubeUrl);
+    const targetUrl = youtubeUrl || localVideoUrl;
+    if (targetUrl) {
+      navigator.clipboard.writeText(targetUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     }
@@ -22,7 +25,7 @@ export default function StudioView({ videos, onDeleteVideo }) {
           Video & Önizleme Stüdyosu 🎬
         </h1>
         <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>
-          Üretilen tüm videolarınızı sahne sahne inceleyin, 1080p önizlemesini izleyin ve doğrudan YouTube bağlantısını görüntüleyin.
+          Üretilen 1080p MP4 videolarınızı doğrudan oynatın, indirin veya YouTube hesabınıza tek tıkla yükleyin.
         </p>
       </div>
 
@@ -64,7 +67,9 @@ export default function StudioView({ videos, onDeleteVideo }) {
                   <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {v.title}
                   </h4>
-                  <span style={{ fontSize: '11px', color: '#94A3B8' }}>{v.format?.toUpperCase()}</span>
+                  <span style={{ fontSize: '11px', color: v.status === 'published' ? '#34D399' : '#818CF8', fontWeight: 700 }}>
+                    {v.status === 'published' ? 'YOUTUBE CANLI' : 'YEREL MP4 HAZIR'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -91,49 +96,74 @@ export default function StudioView({ videos, onDeleteVideo }) {
                 </button>
               </div>
 
-              {/* Prominent YouTube Video Link Container */}
-              <div style={{
-                padding: '16px 20px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%)',
-                border: '1px solid rgba(239, 68, 68, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '16px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
-                  <Tv size={24} color="#EF4444" />
-                  <div style={{ overflow: 'hidden' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      YouTube Video Bağlantısı
-                    </span>
-                    <div style={{ fontSize: '13px', color: '#FFF', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {activeYoutubeUrl}
+              {/* Status Banner */}
+              {isPublished ? (
+                <div style={{
+                  padding: '16px 20px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                    <Tv size={24} color="#34D399" />
+                    <div style={{ overflow: 'hidden' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        YouTube Yayın Bağlantısı (Canlı)
+                      </span>
+                      <div style={{ fontSize: '13px', color: '#FFF', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {youtubeUrl}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button 
-                    onClick={handleCopyLink}
-                    className="btn-secondary"
-                    style={{ fontSize: '12px', padding: '8px 14px', whiteSpace: 'nowrap' }}
-                  >
-                    <Copy size={14} /> {copiedLink ? 'Kopyalandı!' : 'Kopyala'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={handleCopyLink} className="btn-secondary" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      <Copy size={14} /> {copiedLink ? 'Kopyalandı!' : 'Kopyala'}
+                    </button>
 
-                  <a 
-                    href={activeYoutubeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-primary"
-                    style={{ fontSize: '12px', padding: '8px 16px', background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)', whiteSpace: 'nowrap' }}
-                  >
-                    <ExternalLink size={14} /> YouTube'da İzle 📺
-                  </a>
+                    <a href={youtubeUrl} target="_blank" rel="noreferrer" className="btn-primary" style={{ fontSize: '12px', padding: '8px 16px', background: '#34D399', color: '#000' }}>
+                      <ExternalLink size={14} /> YouTube'da İzle 📺
+                    </a>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{
+                  padding: '16px 20px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', overflow: 'hidden' }}>
+                    <Film size={24} color="#818CF8" />
+                    <div style={{ overflow: 'hidden' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#818CF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        1080p Yerel MP4 Dosyası Hazır
+                      </span>
+                      <div style={{ fontSize: '12px', color: '#CBD5E1', marginTop: '2px' }}>
+                        Bilgisayarınızda kaydedildi. Doğrudan izleyebilir veya YouTube Studio'ya yükleyebilirsiniz.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <a href={localVideoUrl} target="_blank" rel="noreferrer" className="btn-secondary" style={{ fontSize: '12px', padding: '8px 14px' }}>
+                      <Download size={14} /> MP4 İndir
+                    </a>
+
+                    <a href="https://studio.youtube.com" target="_blank" rel="noreferrer" className="btn-primary" style={{ fontSize: '12px', padding: '8px 16px', background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)' }}>
+                      <UploadCloud size={14} /> YouTube Studio'ya Yükle 🚀
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Video Player */}
               <div style={{
@@ -146,14 +176,14 @@ export default function StudioView({ videos, onDeleteVideo }) {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {selectedVideo.video_path ? (
+                {localVideoUrl ? (
                   <video 
                     controls 
                     style={{ maxHeight: '400px', width: 'auto', borderRadius: '12px' }}
-                    src={`http://127.0.0.1:8000/${selectedVideo.video_path}`}
+                    src={localVideoUrl}
                   />
                 ) : (
-                  <div style={{ color: '#64748B', padding: '40px' }}>Video dosyası yükleniyor...</div>
+                  <div style={{ color: '#64748B', padding: '40px' }}>Video işleniyor...</div>
                 )}
               </div>
 
