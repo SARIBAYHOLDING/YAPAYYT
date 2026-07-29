@@ -11,13 +11,12 @@ echo.
 cd /d "%~dp0"
 
 echo [1/2] Backend Sunucusu Başlatılıyor (Port 8000)...
-start "Sarıbay Backend API" cmd /k ".\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+start "Sarıbay Backend API" cmd /k "cd backend && ..\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
 
 timeout /t 3 /nobreak > nul
 
 echo [2/2] Frontend Web Stüdyosu Başlatılıyor (Port 5173)...
-cd frontend
-start "Sarıbay Frontend UI" cmd /k "npm.cmd run dev"
+start "Sarıbay Frontend UI" cmd /k "cd frontend && npm.cmd run dev"
 
 echo.
 echo ==================================================================
