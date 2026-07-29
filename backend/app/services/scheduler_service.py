@@ -134,12 +134,16 @@ class SchedulerService:
             title=script_data["title"]
         )
 
-        # Update DB status
+        # Update DB status with relative static server paths
+        rel_audio = f"storage/audio/{audio_file.name}"
+        rel_video = f"storage/videos/{rendered_mp4.name}"
+        rel_thumb = f"storage/thumbnails/{thumb_path.name}"
+
         cursor.execute("""
         UPDATE videos 
         SET status = 'rendered', audio_path = ?, video_path = ?, thumbnail_path = ?
         WHERE id = ?;
-        """, (str(audio_file), str(rendered_mp4), str(thumb_path), video_id))
+        """, (rel_audio, rel_video, rel_thumb, video_id))
         conn.commit()
 
         # 6. Upload / Publish
