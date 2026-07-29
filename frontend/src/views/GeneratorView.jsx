@@ -91,10 +91,10 @@ export default function GeneratorView({ channels, onGenerateVideo }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'Outfit', color: '#FFF' }}>
-            Hızlı & Toplu Video Üretici 🚀
+            Ultra HD Kaliteli Video Üretici 🎬
           </h1>
           <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>
-            Tekil veya toplu video üretin; sistem viral hook yazar, müzik miksler, HD klipleri birleştirir ve 1080p çıktıyı hazırlar.
+            Yüksek çözünürlüklü HD klipler, AI görseller, arka plan müzikleri ve sinematik Ken Burns efektiyle ultra kaliteli videolar üretin.
           </p>
         </div>
 
