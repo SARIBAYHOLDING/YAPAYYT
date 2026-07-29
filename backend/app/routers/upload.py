@@ -11,9 +11,24 @@ router = APIRouter(prefix="/api/upload", tags=["upload"])
 @router.get("/auth-url/{channel_id}")
 def get_auth_url(channel_id: str):
     if not CLIENT_SECRETS_FILE.exists():
+        # Auto-create template client_secrets.json for user convenience
+        default_secrets = {
+            "installed": {
+                "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+                "project_id": "saribay-youtube-auto",
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_secret": "YOUR_CLIENT_SECRET",
+                "redirect_uris": ["http://localhost:8000/api/upload/oauth2callback"]
+            }
+        }
+        with open(CLIENT_SECRETS_FILE, "w", encoding="utf-8") as f:
+            json.dump(default_secrets, f, indent=2)
+
         return {
-            "status": "missing_secrets",
-            "message": "client_secrets.json bulunamadı. Lütfen Google Cloud Console'dan indirip storage/client_secrets.json konumuna kaydedin.",
+            "status": "template_created",
+            "message": "storage/client_secrets.json şablonu oluşturuldu. Lütfen Google Cloud Client ID ve Secret değerlerinizi buraya yapıştırın.",
             "auth_url": None
         }
 
